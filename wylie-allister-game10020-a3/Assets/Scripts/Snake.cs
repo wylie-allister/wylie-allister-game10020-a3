@@ -6,8 +6,8 @@ using UnityEngine.AI;
 public class Snake : MonoBehaviour
 {
 
-    enum State { EggHunt, EggSwallow, EggReturn, Run }
-    State state;
+    public enum State { EggHunt, EggSwallow, EggReturn, Run }
+    public State state;
 
     public Transform character;
     public Transform home;
@@ -37,8 +37,8 @@ public class Snake : MonoBehaviour
     void Start()
     {
 
-       state = State.EggReturn; 
-
+       state = State.EggHunt; 
+        //gets the child of each nest (aka the eggs)
         for (int i = 0; i < eggs.Length; i++)
         {
             eggChildren[i] = eggs[i].gameObject.transform.GetChild(0);
@@ -48,7 +48,7 @@ public class Snake : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        Debug.Log($"{state}");
+        //state swap
         switch (state)
         {
             case State.EggHunt:
@@ -69,24 +69,17 @@ public class Snake : MonoBehaviour
 
     public void HuntEgg()
     {
+        //sets hunt speed and resets swallow time
         agent.speed = huntSpeed;
         swallowTime = 2f;
+        //sets the transform to the current egg and adjusts if none exist
         Transform eggTransform = eggChildren[currentEgg];
+        AdjustIndex();
 
-        if (eggChildren[currentEgg].gameObject.activeInHierarchy == false)
-        {
-            currentEgg++;
-        }
-
-        if (currentEgg >= eggChildren.Length)
-        {
-            currentEgg = 0;
-        }
-
-
+        //sets agent destination to egg transform
         agent.SetDestination(eggTransform.position);
 
-
+        //distance until the state swaps
         Vector3 posXZ = transform.position;
         posXZ.y = 0;
 
@@ -103,15 +96,15 @@ public class Snake : MonoBehaviour
 
     public void EggSwallow()
     {
-
-        if (heldEggs == 2)
+        //if the snake has more than 2 eggs in it, it returns home to deposit them
+        if (heldEggs >= 2)
         {
             state = State.EggReturn;
             return;
         }
 
         swallowTime -= Time.deltaTime;
-
+        // if the swallow timer elapses, return to hunt
         if (swallowTime <= 0)
         {
             state = State.EggHunt;
@@ -120,6 +113,7 @@ public class Snake : MonoBehaviour
 
     public void EggReturn()
     {
+        //sets the snake destination to home
         agent.SetDestination(home.position);
 
         Vector3 posXZ = transform.position;
@@ -131,6 +125,7 @@ public class Snake : MonoBehaviour
         float distance = Vector2.Distance(posXZ, homePosXZ);
         if (distance < stationaryProx)
         {
+            //adds held eggs to total, resets held eggs and current egg position
             totalEggs += heldEggs;
             heldEggs = 0;
             currentEgg = 0;
@@ -140,6 +135,7 @@ public class Snake : MonoBehaviour
 
     public void Run()
     {
+        //makes snake run away faster, otherwise pretty much just returnhome
         agent.speed = runSpeed;
         agent.SetDestination(home.position);
 
@@ -152,19 +148,31 @@ public class Snake : MonoBehaviour
         float distance = Vector2.Distance(posXZ, homePosXZ);
         if (distance < stationaryProx)
         {
-            totalEggs += heldEggs;
-            heldEggs = 0;
             state = State.EggHunt;
+        }
+    }
+
+    public void AdjustIndex()
+    {
+        //if that nest's egg is disabled, add up until you find one that isn't
+        if (eggChildren[currentEgg].gameObject.activeInHierarchy == false)
+        {
+            currentEgg++;
+        }
+
+        if (currentEgg >= eggChildren.Length)
+        {
+            currentEgg = 0;
         }
     }
 
     public void OnTriggerEnter(Collider other)
     {
+        //add held egg and disable gameobject
         if (other.tag == "Egg")
         {
             heldEggs++;
             other.gameObject.SetActive(false);
-            currentEgg++;
         }
     }
 }
