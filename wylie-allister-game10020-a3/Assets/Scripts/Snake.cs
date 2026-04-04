@@ -72,9 +72,8 @@ public class Snake : MonoBehaviour
         //sets hunt speed and resets swallow time
         agent.speed = huntSpeed;
         swallowTime = 2f;
-        //sets the transform to the current egg and adjusts if none exist
+        //sets the transform to the current egg
         Transform eggTransform = eggChildren[currentEgg];
-        AdjustIndex();
 
         //sets agent destination to egg transform
         agent.SetDestination(eggTransform.position);
@@ -96,6 +95,8 @@ public class Snake : MonoBehaviour
 
     public void EggSwallow()
     {
+        //Adjust index number if nothing exists to lock onto
+        AdjustIndex();
         //if the snake has more than 2 eggs in it, it returns home to deposit them
         if (heldEggs >= 2)
         {
@@ -128,7 +129,7 @@ public class Snake : MonoBehaviour
             //adds held eggs to total, resets held eggs and current egg position
             totalEggs += heldEggs;
             heldEggs = 0;
-            currentEgg = 0;
+           // currentEgg = 0;
             state = State.EggHunt;
         }    
     }
@@ -169,7 +170,7 @@ public class Snake : MonoBehaviour
     public void OnTriggerEnter(Collider other)
     {
         //add held egg and disable gameobject
-        if (other.tag == "Egg")
+        if (other.tag == "Egg" && heldEggs < 2)
         {
             heldEggs++;
             other.gameObject.SetActive(false);
